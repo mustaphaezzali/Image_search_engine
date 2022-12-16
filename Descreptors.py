@@ -4,6 +4,7 @@ from skimage.feature import hog
 from skimage import exposure
 from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
+import numpy as np 
 import cv2 as cv
 
 def hog_descriptor(img):
@@ -11,12 +12,18 @@ def hog_descriptor(img):
     fd1, hog_image1 = hog(resized_img1, orientations=9, pixels_per_cell=(8, 8),cells_per_block=(2, 2), visualize=True, multichannel=True)
     return fd1
 
-def hue_moment_descriptor(img):
-    _,im = cv.threshold(im, 128, 255, cv.THRESH_BINARY)
+def hue_moment_descriptor(im):
+    #preprocessing
+    img = cv.cvtColor(im, cv.COLOR_RGB2GRAY)
+    img_len,img_width = img.shape[0],img.shape[1]
+    centre = img_len//2,img_width//2
+    seuil = img[centre[0]-2:centre[0]+2,centre[1]-2:centre[1]+2].mean()                     #img[img_dim[0]//2,img_dim[1]//2]
+    couleur = 255
+    options = [cv.THRESH_BINARY,cv.THRESH_BINARY_INV,cv.THRESH_TRUNC,cv.THRESH_TOZERO,cv.THRESH_TOZERO_INV]
+    result = cv.threshold(img, int(seuil), couleur, options[0])[1]
     # Calculate Moments 
-    moments = cv.moments(im) 
-# Calculate Hu Moments 
+    moments = cv.moments(result) 
+    # Calculate Hu Moments 
     huMoments = cv.HuMoments(moments)
-    for i in range(0,7):
-        huMoments[i] = -1* copysign(1.0, huMoments[i]) * log10(abs(huMoments[i]))
-    return huMoments    
+    return huMoments.reshape((7,))    
+    
